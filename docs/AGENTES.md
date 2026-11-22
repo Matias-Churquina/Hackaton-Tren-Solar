@@ -1,6 +1,6 @@
 # Optimización de agentes: prototipo funcional en 60 minutos
 
-> Objetivo: **demo funcional en 1 hora**, no producto completo. Este documento **recorta** el alcance de [`PLAN.md`](PLAN.md) y reparte el trabajo entre agentes de **Claude Code** según el modelo.
+> Objetivo: **demo funcional en 1 hora**, no producto completo. La presentación es una **simulación**: todos los datos son ficticios (`sintetico = true`) y no se incluyen textos legales. Este documento **recorta** el alcance de [`PLAN.md`](PLAN.md) y reparte el trabajo entre agentes de **Claude Code** según el modelo.
 > Las reglas de [`AGENTS.md`](../AGENTS.md) siguen vigentes (privacidad, ~100 m, sin coordenadas exactas, `sintetico = true`, una rama por tarea, el usuario mergea).
 > **Supuesto de stack:** el de `main` (NestJS + Prisma, React + Vite). Si la implementación del compañero usa otro (por ejemplo, Next.js), se mantienen los agentes, los contratos y los tiempos y solo cambian las rutas de archivos.
 
@@ -19,12 +19,12 @@
 
 **Entra (P0-demo)**
 - `/` Mapa KDE de toda la ciudad (`leaflet.heat`), con filtros de categoría y franja horaria, leyenda verde→rojo, fuente visible y puntos de asistencia.
-- `/reportar` Formulario público: anónimo (abuso sexual, violencia de género e intrafamiliar) o con contacto (resto, con declaración jurada). Derivación automática por categoría.
+- `/reportar` Formulario público: anónimo (abuso sexual, violencia de género e intrafamiliar) o con contacto (resto, con una casilla de declaración simulada, sin texto legal). Derivación automática por categoría.
 - `/operador` Login y bandeja filtrada por organismo; cambio de estado `NUEVO → CONTACTADO → DERIVADO → CERRADO` y nota interna.
 - `/estadisticas` Barras por categoría, línea por mes, variación frente al período anterior y recomendaciones situacionales.
 - Seed sintético (al final, con la lógica completa).
 
-**Queda afuera de la demo:** panel admin con UI (T008/T012 → Swagger), rol `CIUDADANO` (T016), auditoría detallada (solo `actualizadoPor`), deploy (T014), polígonos de barrios dibujados (se usan centroides).
+**Queda afuera de la demo:** textos legales (declaración jurada y aviso de privacidad), panel admin con UI (T008/T012 → Swagger), rol `CIUDADANO` (T016), auditoría detallada (solo `actualizadoPor`), deploy (T014), polígonos de barrios dibujados (se usan centroides).
 
 ## 3. Contratos (los fija Opus en el minuto 0–10 y no se cambian)
 
@@ -52,7 +52,7 @@ Socket.IO: evento `mapa:actualizado` **sin payload personal**. El front vuelve a
 | **A2 Backend mapa** | `sonnet` | Agregación y estadística | `/mapa/calor` (grilla ~100 m), `/estadisticas`, `/recomendaciones`; adapta `agregacion.ts` y `reglas.ts` | `feat/mapa-estadisticas` | `backend/src/mapa/`, `backend/src/estadisticas/`, `backend/src/recomendaciones/` |
 | **A3 Front mapa y estadísticas** | `sonnet` + plugin `frontend-design` | UI cuidada como la referencia | Base Vite + Tailwind + shadcn, layout, `/` y `/estadisticas` | `feat/front-mapa` | `frontend/src/pages/Mapa*`, `frontend/src/pages/Estadisticas*`, `frontend/src/components/mapa/` |
 | **A4 Front reportar y operador** | `sonnet` | Formularios con reglas | `/reportar` (React Hook Form + Zod) y `/operador` | `feat/front-reportar-operador` | `frontend/src/pages/Reportar*`, `frontend/src/pages/Operador*` |
-| **A5 Contenido y seed** | `haiku` | Tarea mecánica y de texto | Textos legales (declaración jurada, aviso de privacidad), recursos 911/144/102, servicios de asistencia, README "cómo correr la demo"; **seed sintético solo en el minuto 40** | `feat/seed-demo` | `backend/prisma/seed.ts`, `docs/LEGALES.md`, `README.md` |
+| **A5 Contenido y seed** | `haiku` | Tarea mecánica | Recursos 911/144/102, servicios de asistencia, README "cómo correr la demo"; **seed sintético solo en el minuto 40** | `feat/seed-demo` | `backend/prisma/seed.ts`, `README.md` |
 | **A6 QA** | `haiku` | Correr checks y reportar | Lint, build y tests de cada rama; capturas a 390 y 1280 px con plugin `playwright`; busca en Network coordenadas exactas o contactos | — (solo lee) | — |
 | **A7 Pitch** | `haiku` | Texto | Ajusta `docs/PITCH.md` a lo que realmente quedó en pantalla | `docs/pitch` | `docs/PITCH.md` |
 
@@ -62,7 +62,7 @@ Socket.IO: evento `mapa:actualizado` **sin payload personal**. El front vuelve a
 
 | Minuto | Opus (A0) | Sonnet (A1–A4) | Haiku (A5–A7) |
 |---|---|---|---|
-| 0–10 | Esquema MySQL, contratos, Docker, `.env.example`. PR `chore/demo-base` | Leen `AGENTS.md`, este doc y la spec. A3 arma la base del front con mocks de §3 | A5 redacta textos legales y recursos de asistencia |
+| 0–10 | Esquema MySQL, contratos, Docker, `.env.example`. PR `chore/demo-base` | Leen `AGENTS.md`, este doc y la spec. A3 arma la base del front con mocks de §3 | A5 arma recursos de asistencia y el README de la demo |
 | 10–40 | Revisa PRs a medida que llegan y resuelve dudas de contrato | A1, A2, A3 y A4 en paralelo, cada uno en su worktree y con tests | A6 corre checks de cada PR. A5 prepara el seed (sin correrlo) |
 | 40–48 | Integra: mergea en orden A0 → A1 → A2 → A3 → A4, front contra API real | Arreglan lo que rompa la integración | A5 corre el seed: 4 barrios, ~300 incidentes y tickets, usuarios demo |
 | 48–55 | Revisión final de privacidad (respuestas públicas y Socket.IO) | Ajustes visuales | A6: capturas a 390 y 1280 px y verificación en Network |
