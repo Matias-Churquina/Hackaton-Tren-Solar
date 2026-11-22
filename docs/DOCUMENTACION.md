@@ -86,7 +86,7 @@ Perico, Humahuaca, etc.).
 
 ### Backend (`backend/`)
 - NestJS + TypeScript
-- **Prisma ORM** + PostgreSQL (reemplaza a TypeORM)
+- **Prisma ORM** + MySQL 8 (reemplaza a TypeORM)
 - JWT + Passport (auth, 3 roles)
 - Socket.IO gateway (WebSockets)
 - Swagger (docs en `/api/docs`)
@@ -98,14 +98,14 @@ Perico, Humahuaca, etc.).
   uso en este proyecto; no están integrados.
 
 ### Infraestructura
-- Railway (backend + PostgreSQL)
+- Railway (backend + MySQL)
 - Vercel (frontend)
 - GitHub Actions (CI)
 
 ## 9. Arquitectura
 
 ```
-[Vercel] React SPA ──HTTP (Axios)──▶ [Railway] NestJS API ──Prisma──▶ PostgreSQL
+[Vercel] React SPA ──HTTP (Axios)──▶ [Railway] NestJS API ──Prisma──▶ MySQL
         ▲                                   │
         └────────── Socket.IO ◀─────────────┘
         └── tiles Carto/OSM
@@ -123,7 +123,7 @@ Perico, Humahuaca, etc.).
 
 | Variable | Dónde | Descripción |
 |---|---|---|
-| `DATABASE_URL` | backend | Cadena de conexión PostgreSQL |
+| `DATABASE_URL` | backend | Cadena de conexión MySQL (`mysql://user:pass@host:3306/db`) |
 | `JWT_SECRET` | backend | Secreto para firmar tokens |
 | `JWT_EXPIRES_IN` | backend | Duración del token (p. ej. `1d`) |
 | `CORS_ORIGIN` | backend | URL del frontend |

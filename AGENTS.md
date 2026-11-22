@@ -7,7 +7,7 @@ Las reglas de ramas, merge y verificación están en [CONTRIBUTING.md](CONTRIBUT
 ## Estructura
 
 ```
-backend/    NestJS + Prisma + PostgreSQL (API REST, auth JWT, Socket.IO, Swagger)
+backend/    NestJS + Prisma + MySQL 8 (API REST, auth JWT, Socket.IO, Swagger)
 frontend/   React 18 + Vite + TypeScript + Tailwind + Leaflet
 docs/       Documentación del proyecto
 .github/    CI (GitHub Actions) y plantilla de PR
@@ -16,7 +16,8 @@ docs/       Documentación del proyecto
 ## Requisitos
 
 - Node.js 20 LTS y npm
-- PostgreSQL 15+ (local o Docker: `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16`)
+- MySQL 8 (local o Docker: `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=jujuy mysql:8`)
+- Plan y orden de tareas: [docs/PLAN.md](docs/PLAN.md)
 
 ## Comandos
 
