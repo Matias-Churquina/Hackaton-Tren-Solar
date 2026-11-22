@@ -92,4 +92,4 @@ Tres piezas:
 - DiPEC Jujuy, advertencia sobre subregistro en estadísticas de delitos.
 - INDEC, Encuesta Nacional de Victimización 2017.
 - Ley 25.326 de Protección de los Datos Personales.
-- Investigación del equipo (resumen en `docs/DOCUMENTACION.md`).
+- Investigación del equipo sobre fuentes de datos, sesgos y prevención situacional en Jujuy.
