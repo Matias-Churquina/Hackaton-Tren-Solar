@@ -208,4 +208,4 @@ Librerías del proyecto (§6.1): shadcn/ui, Radix, Recharts, React Hook Form + Z
 
 ## 9. Seguimiento
 
-Las tareas T001–T016 de §7 reemplazan a las anteriores. Los issues #3–#16 quedan desactualizados y se recrean con esta numeración.
+Las tareas T001–T016 de §7 son los issues [#19–#34](https://github.com/Matias-Churquina/Hackaton-Tren-Solar/issues) (T001 = #19 … T016 = #34). Los issues #3–#16 del plan anterior quedaron cerrados.
