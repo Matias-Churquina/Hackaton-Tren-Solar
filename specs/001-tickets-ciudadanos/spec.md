@@ -12,7 +12,7 @@ Decisiones y contexto de negocio: [`docs/PLAN.md`](../../docs/PLAN.md).
 ### User Story 1 - Reportar un hecho (Priority: P1)
 Una persona sin cuenta reporta un hecho que sufrió o presenció: elige la categoría, marca la ubicación en el mapa e indica la fecha y la franja horaria, si fue víctima o testigo, y un relato opcional.
 
-**Independent Test**: enviar el formulario y ver que el ticket se crea y que la celda correspondiente suma intensidad en el heatmap.
+**Independent Test**: enviar el formulario y ver que el ticket se crea y que la zona correspondiente suma intensidad en el heatmap.
 
 **Acceptance Scenarios**:
 1. **Given** la categoría `ABUSO_SEXUAL`, **When** la persona elige "anónimo", **Then** el ticket se crea sin datos de contacto y se muestra una confirmación con los recursos de urgencia (911, 144, 102).
@@ -33,19 +33,18 @@ Un operador de Salud o de Policía ve los tickets derivados a su organismo, cont
 El mapa de calor y las tendencias combinan los incidentes oficiales y los tickets en una sola capa.
 
 **Acceptance Scenarios**:
-1. **Given** incidentes y tickets en la misma celda, **Then** el heatmap suma ambos y nunca devuelve coordenadas exactas ni datos personales.
+1. **Given** incidentes y tickets en la misma celda de ~100 m, **Then** el heatmap suma ambos y nunca devuelve coordenadas exactas ni datos personales.
 2. **Then** el mapa muestra la leyenda "incluye reportes ciudadanos no verificados".
 
 ### User Story 4 - Ciudadano con cuenta (Priority: P2)
-Un `CIUDADANO` registrado ve el análisis de su zona (tendencia, franjas de más riesgo, recomendaciones) y puede pedir, con consentimiento explícito, que una empresa de seguridad lo contacte.
+Un `CIUDADANO` registrado ve el análisis de toda la ciudad de San Salvador de Jujuy: ranking de barrios, tendencias, franjas de más riesgo y recomendaciones.
 
 **Acceptance Scenarios**:
-1. **Given** que no dio su consentimiento, **Then** ninguna empresa recibe sus datos.
-2. **Given** que dio su consentimiento eligiendo una empresa, **Then** solo esa empresa recibe el contacto que la persona eligió compartir.
+1. **Given** un ciudadano con sesión iniciada, **Then** ve las estadísticas de todos los barrios de la ciudad, solo agregadas y sin datos individuales.
 
 ### Edge Cases
 - Envíos masivos desde una misma IP: rate limit (429).
-- Ubicación fuera de Jujuy: se rechaza.
+- Ubicación fuera de San Salvador de Jujuy: se rechaza (422).
 - Pedido de supresión de datos: borrado lógico (`deletedAt`) inmediato, más supresión física de los datos de contacto cuando la persona lo pide (Ley 25.326, art. 16).
 
 ## Requirements
@@ -57,19 +56,17 @@ Un `CIUDADANO` registrado ve el análisis de su zona (tendencia, franjas de más
 - **FR-004**: Derivación automática: `ABUSO_SEXUAL` → `SALUD` y `POLICIA`; el resto → `POLICIA`.
 - **FR-005**: El ticket con contacto tiene los estados `NUEVO`, `CONTACTADO`, `DERIVADO` y `CERRADO`, con notas internas y registro de quién hizo cada cambio y cuándo.
 - **FR-006**: Los datos de contacto se guardan cifrados (AES-256-GCM, clave en una variable de entorno) y solo los descifran los operadores del organismo destino.
-- **FR-007**: La ubicación exacta se guarda para uso operativo; el heatmap y las estadísticas usan la celda agregada.
+- **FR-007**: La ubicación exacta se guarda para uso operativo; el heatmap recibe puntos agrupados en una grilla de ~100 m (nunca coordenadas exactas) y las estadísticas usan barrios.
 - **FR-008**: Heatmap, conteo por zona y tendencias incluyen los tickets (una sola capa). `MIN_COUNT` es configurable y vale 1 por defecto.
 - **FR-009**: Rate limit de 5 tickets por IP por hora.
 - **FR-010**: Sin adjuntos en el MVP.
 - **FR-011**: El seed genera tickets sintéticos (`sintetico = true`).
-- **FR-012** (P2): Rol `CIUDADANO` con registro, análisis de zona y consentimiento de contacto con una empresa de seguridad.
+- **FR-012** (P1): Rol `CIUDADANO` con registro y acceso al análisis agregado de toda la ciudad.
 
 ### Key Entities
 - **Ticket**: categoría, modo (`ANONIMO` | `CON_CONTACTO`), rol de quien reporta (`VICTIMA` | `TESTIGO`), fecha del hecho, franja, lat/lng, zona, relato, quiere denunciar, declaración aceptada, estado, organismos destino, `sintetico`, `deletedAt`.
 - **ContactoTicket**: nombre, teléfono, email y horario preferido (cifrados), relación 1:1 con Ticket.
 - **NotaTicket**: texto, autor (operador), fecha.
-- **EmpresaSeguridad** (P2): razón social, habilitación, zonas.
-- **SolicitudContactoEmpresa** (P2): ciudadano, empresa, consentimiento, fecha.
 
 ## Success Criteria
 - **SC-001**: Reportar un hecho toma menos de 1 minuto.
@@ -79,4 +76,5 @@ Un `CIUDADANO` registrado ve el análisis de su zona (tendencia, franjas de más
 
 ## Assumptions
 - Ministerio de Salud y Policía de Jujuy son operadores de demo, sin convenio real todavía.
-- Las empresas de seguridad nombradas en el plan son clientes potenciales; en la demo no se usan sus datos reales.
+- Las empresas de seguridad quedan fuera de alcance (fase 2 del modelo de negocio).
+- Base de datos: MySQL 8 con Prisma. Entidades y orden de trabajo: `docs/PLAN.md` §6 y §7.

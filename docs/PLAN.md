@@ -1,176 +1,211 @@
-# Plan del proyecto — Inteligencia territorial y reportes ciudadanos (Jujuy)
+# Plan del proyecto: inteligencia territorial y reportes ciudadanos (Jujuy)
 
 > Entrega: **hoy (22/11/2026)**. Sin requisitos formales del jurado.
-> Herramientas: **Spec Kit** (`.specify/` + `specs/`) para especificar y **GitHub Issues/Projects** para el seguimiento.
-> Especificación detallada: [`specs/001-tickets-ciudadanos/spec.md`](../specs/001-tickets-ciudadanos/spec.md).
+> Herramientas: **Spec Kit** (`.specify/` + `specs/`) para especificar y **GitHub Issues** para el seguimiento.
+> Especificación detallada: [`specs/001-tickets-ciudadanos/spec.md`](../specs/001-tickets-ciudadanos/spec.md) · Tareas: [`tasks.md`](../specs/001-tickets-ciudadanos/tasks.md).
+> Este documento es la **fuente de verdad para orquestar el código** (personas y agentes: Devin, Claude Code).
 
 ## 1. Visión
 
 Una plataforma web que combina **datos oficiales agregados** (SNIC) con **reportes
-ciudadanos** para construir un mapa de calor del delito en Jujuy, un dashboard
+ciudadanos** para construir un mapa de calor del delito en **San Salvador de Jujuy**, un dashboard
 estadístico y recomendaciones de prevención situacional. Quien sufrió un delito o un
 abuso puede reportarlo, de forma **anónima** o pidiendo que **alguien la contacte**.
 El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categoría.
 
-## 2. Estado actual
+## 2. Estado actual y punto de partida
 
-| Pieza | Estado |
-|---|---|
-| Documentación, AGENTS.md, reglas de merge, CI | Mergeado (PR #1) |
-| Backend NestJS + Prisma: heatmap, tendencias, recomendaciones, JWT 3 roles, Socket.IO | Mergeado (PR #2) |
-| Arreglos del review automático de PR #2 (rate limit en login, límite de body, CORS de WS, ventanas de meses) | Rama `fix/backend-review-findings`, falta PR |
-| Frontend React + Vite: mapa, panel, login, directorio | Rama `feat/frontend-react-vite`, falta PR |
-| Tickets ciudadanos, operadores, modelo de negocio | **Este plan** |
+| Pieza | Estado | Qué hacemos |
+|---|---|---|
+| Documentación, `AGENTS.md`, reglas de merge, CI | En `main` | Se mantiene; se actualiza a MySQL |
+| Backend NestJS + Prisma + PostgreSQL (PR #2) | En `main` | **Se reemplaza por completo** (fase 0). Se pueden reutilizar las funciones puras de `backend/src/incidentes/agregacion.ts` y sus tests |
+| Ramas locales `fix/backend-review-findings` y `feat/frontend-react-vite` | Sin PR | **Se descartan.** Sus arreglos (rate limit en login, límite de body, CORS múltiple, resta de meses) pasan como requisitos de la reescritura |
+| Tickets, operadores, mapa KDE, admin | No existe | Este plan |
 
 ## 3. Decisiones tomadas
 
 | # | Tema | Decisión |
 |---|---|---|
-| 1 | Herramientas | Spec Kit + `PLAN.md` + GitHub Issues/Projects |
-| 2 | Formulario | Público, sin cuenta |
-| 3 | Datos según agravante | **Robo, hurto, hurto de vehículo, lesiones, homicidio, estafa:** datos mínimos obligatorios (nombre y un contacto) más una declaración jurada de veracidad, aunque no se haga la denuncia. **Abuso sexual, violencia de género, violencia intrafamiliar:** se permite el modo **anónimo**. |
-| 4 | Roles | `PUBLICO` (reporta sin cuenta) · `CIUDADANO` (con cuenta: análisis de su zona y contacto con empresas de seguridad) · `OPERADOR_SALUD` · `OPERADOR_POLICIA` (cada uno ve solo sus tickets) · `ANALISTA` (todo agregado) · `ADMIN` (gestiona) |
-| 5 | Derivación | Automática por categoría: abuso sexual → **Salud y Policía**; violencia de género e intrafamiliar → **Policía**, con recursos de Salud; robo, hurto, lesiones, homicidio, estafa → **Policía** |
-| 6 | Categorías | Las del SNIC que ya están en el sistema, más `ABUSO_SEXUAL`. Acoso, violencia institucional y maltrato infantil quedan **fuera de alcance** |
-| 7 | Ubicación | Se guarda la ubicación que marca la persona (uso interno de operadores). En el mapa y en las estadísticas se muestra solo **agregada por celda** |
-| 8 | Adjuntos | **No** en el MVP (default recomendado) |
-| 9 | Víctima o testigo | Se pregunta (default) |
-| 10 | Contacto | Nombre, teléfono o email, horario preferido. **Sin DNI** (default) |
-| 11 | Anónimo → denuncia | Si la persona marca "quiero denunciar", el ticket pasa a **con contacto** para que un operador la oriente |
-| 12 | Anónimo sin denuncia | Envío sin seguimiento ni respuesta |
-| 13 | Estados del ticket con contacto | `NUEVO → CONTACTADO → DERIVADO → CERRADO`, con notas internas del operador |
-| 14 | Mapa | **Una sola capa** que combina datos oficiales y reportes ciudadanos. Los reportes entran **directo**, sin validación previa |
-| 15 | Umbral mínimo | **Sin mínimo** (ver riesgo R1) |
-| 16 | Retención | **Borrado lógico** de los datos de contacto (ver riesgo R3) |
-| 17 | Datos de demo | Tickets **sintéticos**, marcados con `sintetico = true` |
+| 0 | Alcance territorial | **Ciudad de San Salvador de Jujuy** (todos sus barrios). El resto de la provincia queda para una fase posterior |
+| 1 | Base de datos | **MySQL 8** con **Prisma** como ORM (reemplaza a PostgreSQL) |
+| 2 | Código existente | Se reemplaza por completo donde haga falta |
+| 3 | Empresas de seguridad | **Fuera de alcance** (ni rol, ni directorio, ni solicitudes de contacto). Quedan como fase 2 del modelo de negocio |
+| 4 | Administración | Todas las entidades (usuarios, operadores, barrios, categorías y derivación, servicios de asistencia, reglas de recomendación, incidentes oficiales) se gestionan desde un **panel ADMIN** |
+| 5 | Datos de demo | Precarga completa de **datos ficticios** (`sintetico = true`), que se agrega **recién cuando la lógica esté completa** (fase 5). Hasta entonces, los tests usan fixtures propios |
+| 6 | Formulario | Público, sin cuenta |
+| 7 | Datos según agravante | **Robo, hurto, hurto de vehículo, lesiones, homicidio, estafa:** nombre, un contacto y declaración jurada obligatorios. **Abuso sexual, violencia de género, violencia intrafamiliar:** se permite el modo **anónimo** |
+| 8 | Roles | `PUBLICO` (sin cuenta) · `CIUDADANO` (P1: análisis de **toda la ciudad**, barrio por barrio) · `OPERADOR_SALUD` · `OPERADOR_POLICIA` (cada uno ve solo sus tickets) · `ANALISTA` (todo agregado) · `ADMIN` (gestiona todo y crea las cuentas de operadores) |
+| 9 | Derivación | Automática por categoría y configurable por ADMIN: abuso sexual → **Salud y Policía**; violencia de género e intrafamiliar → **Policía** (con recursos de Salud); resto → **Policía** |
+| 10 | Categorías | `HOMICIDIO`, `LESIONES`, `VIOLENCIA_GENERO`, `VIOLENCIA_INTRAFAMILIAR`, `ABUSO_SEXUAL`, `ROBO`, `HURTO`, `HURTO_VEHICULO`, `ESTAFA_ONLINE`. Acoso, violencia institucional y maltrato infantil quedan fuera |
+| 11 | Ubicación | Se guarda el punto que marca la persona, visible solo para el operador asignado. Al público llega **agrupada** (ver §6.5) |
+| 12 | Adjuntos | No |
+| 13 | Víctima o testigo | Se pregunta |
+| 14 | Contacto | Nombre, teléfono o email, horario preferido. Sin DNI |
+| 15 | Anónimo → denuncia | Si marca "quiero denunciar", se piden datos y pasa a **con contacto** |
+| 16 | Anónimo sin denuncia | Envío sin seguimiento ni respuesta |
+| 17 | Estados | `NUEVO → CONTACTADO → DERIVADO → CERRADO`, con notas internas |
+| 18 | Mapa | **Una sola capa** (oficial + ciudadano, mismo peso), estilo **densidad continua (KDE)** como la referencia de la UANL. Los reportes entran directo, sin validación |
+| 19 | Umbral mínimo | Sin mínimo (`MIN_COUNT=1`, configurable; ver R1) |
+| 20 | Retención | Borrado lógico; borrado físico si la persona pide la supresión |
 
-## 4. Riesgos que hay que tener en cuenta
+## 4. Riesgos
 
-| # | Riesgo | Mitigación propuesta (no bloquea la entrega) |
+| # | Riesgo | Mitigación |
 |---|---|---|
-| R1 | Sin umbral mínimo, en una zona con pocos casos un solo reporte de abuso puede **identificar a la víctima** | Usar la grilla de ~1 km² (nunca el punto exacto), mostrar intensidad y no conteos individuales, y mantener `MIN_COUNT` configurable (default 1) para activarlo después |
-| R2 | Con entrada directa y sin validación se pueden **inflar zonas** con reportes falsos o estigmatizar barrios | Declaración jurada, rate limit por IP, captcha y una etiqueta "incluye reportes ciudadanos no verificados" en el mapa |
-| R3 | Con borrado lógico el dato sigue existiendo. La Ley 25.326 (art. 16) da derecho a la **supresión** | Borrado lógico por defecto, más supresión física cuando la persona lo pide o al cumplirse el plazo de retención |
-| R4 | Abuso y violencia son **datos sensibles** (art. 7) | Cifrar los datos de contacto en reposo, acceso solo para el operador asignado y auditoría de accesos |
-| R5 | Conflicto de interés: una empresa de seguridad gana más cuanto más miedo haya | Las empresas ven solo datos agregados, nunca datos personales ni tickets. Transparencia sobre quién paga |
+| R1 | Sin umbral y con KDE a escala barrio, un reporte de abuso puede **señalar una casa** | Agrupar puntos cada ~100 m antes de enviarlos, nunca mostrar marcadores individuales, `MIN_COUNT` configurable |
+| R2 | Reportes falsos que inflan o estigmatizan barrios | Declaración jurada, rate limit por IP, leyenda "incluye reportes ciudadanos no verificados" |
+| R3 | El borrado lógico no cumple el derecho de supresión (Ley 25.326, art. 16) | Borrado físico a pedido |
+| R4 | Abuso y violencia son datos sensibles (art. 7) | Contacto cifrado (AES-256-GCM), acceso solo del organismo asignado, auditoría |
 
 ## 5. Modelo de negocio
 
-**Principio:** la ciudadanía nunca paga por reportar ni por pedir ayuda, y **ningún
-dato personal se comparte con empresas privadas**. Lo que se vende es el **análisis
-agregado** y la **conexión voluntaria**.
+- **Ciudadanía (B2C):** gratis. Reportar, ver el mapa y (P1) el análisis de toda la ciudad.
+- **Estado (B2G):** licencia del panel de operadores para Salud y Policía, y reportes agregados para políticas públicas. Es el cliente del MVP.
+- **Fase 2 (fuera de alcance hoy):** empresas de seguridad de Jujuy (suscripción por zonas a datos agregados, solicitudes de contacto con consentimiento), aseguradoras e inmobiliarias.
+- **Regla de oro:** ningún dato personal se comparte con privados.
 
-### 5.1 Segmentos de clientes
+## 6. Arquitectura y lógica de negocio
 
-| Segmento | Ejemplos | Qué compra |
-|---|---|---|
-| Empresas de seguridad privada (B2B) | Tiempo Seguridad S.R.L., Boxer S.A., Clarmi Seguridad S.R.L., Seguridad del Valle S.R.L., Seguridad Privada Integral S.R.L., S.P.E. Seguridad Privada Eficiente S.R.L., Agencia Integral de Seguridad e Investigaciones Security S.R.L. | Dashboard de inteligencia territorial, alertas por zona, perfil destacado en el directorio y solicitudes de contacto de ciudadanos que lo pidieron |
-| Estado (B2G) | Ministerio de Seguridad, Ministerio de Salud, municipios | Licencia del panel de operadores y del observatorio, reportes para políticas públicas |
-| Otros B2B (fase 2) | Aseguradoras, inmobiliarias, comercios, consorcios | Informes de riesgo por zona (agregados) |
-| Ciudadanía (B2C) | Vecinos y vecinas con cuenta | Gratis: reportar, ver el mapa, análisis de su zona, alertas |
+### 6.1 Stack
 
-### 5.2 Fuentes de ingreso (hipótesis para validar)
-
-1. **Suscripción SaaS para empresas de seguridad**, con planes por cantidad de zonas: dashboard agregado, tendencias, recomendaciones, exportes y alertas en tiempo real.
-2. **Solicitudes de contacto con consentimiento (lead generation):** un `CIUDADANO` pide "quiero que una empresa me contacte para evaluar la seguridad de mi casa". Solo con ese consentimiento explícito se le pasa a la empresa elegida el contacto que la persona decidió compartir. Se cobra por solicitud o va incluido en el plan.
-3. **Directorio destacado:** las empresas habilitadas por la Policía de la Provincia aparecen en el análisis de zona (marcadas como "patrocinado").
-4. **Licencia B2G** para Salud y Policía: panel de operadores, derivación y estadísticas.
-5. **Informes a medida** para aseguradoras e inmobiliarias (fase 2).
-
-### 5.3 Cómo se lo vendemos a la gente (adopción B2C)
-
-- **Propuesta de valor:** "Conocé la seguridad de tu barrio y pedí ayuda en 1 minuto, de forma anónima si lo necesitás".
-- **Gancho con cuenta:** un análisis gratuito de la zona donde vivís (tendencia, horarios de más riesgo, recomendaciones) y alertas cuando sube un indicador.
-- **Canales:** centros vecinales, grupos de WhatsApp barriales, escuelas y centros de salud (cartelería con QR), redes de la provincia y del municipio, y radios locales.
-- **Confianza:** sello "tus datos no se venden", aviso de privacidad claro y un aliado institucional (Ministerio de Salud y Policía).
-- **Métricas:** reportes por semana, porcentaje con contacto, tiempo hasta el primer contacto, ciudadanos registrados y conversión de solicitudes a empresas.
-
-### 5.4 Lienzo resumido
-
-| Bloque | Contenido |
+| Capa | Tecnología |
 |---|---|
-| Propuesta de valor | Ciudadanía: ayuda y conocimiento de su zona. Empresas: inteligencia territorial accionable. Estado: datos que la denuncia no capta (subregistro) |
-| Canales | Web responsive, QR en territorio, ventas directas a las 7 empresas, convenios con ministerios |
-| Relación | Autoservicio (B2C), gestor de cuenta (B2B/B2G) |
-| Recursos clave | Datos agregados, plataforma, alianzas institucionales |
-| Socios | Ministerio de Salud, Policía de Jujuy, municipios, ONGs de asistencia a víctimas |
-| Costos | Hosting (Railway/Vercel), desarrollo, soporte de operadores, cumplimiento legal |
+| Frontend | React 18 + TypeScript + Vite, Tailwind v3 + `figma.css`, shadcn/ui (Radix), React Router v6, React-Leaflet 4 + `leaflet.heat`, Recharts, React Hook Form + Zod, Axios, socket.io-client, Lucide, Sonner |
+| Backend | NestJS 10 + TypeScript, **Prisma 5 + MySQL 8**, JWT + Passport, bcrypt, `@nestjs/throttler`, Socket.IO, Swagger, class-validator |
+| Infra | Docker (`mysql:8`) en local, Railway (backend + MySQL), Vercel (frontend), GitHub Actions |
 
-## 6. Lógica de negocio
+**MySQL con Prisma, a tener en cuenta:**
+- `datasource db { provider = "mysql" }` y `DATABASE_URL="mysql://root:root@localhost:3306/jujuy"`.
+- Local: `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=jujuy mysql:8`.
+- `prisma migrate dev` necesita una *shadow database*: usar el usuario root en local.
+- Prisma no soporta tipos espaciales en MySQL: lat/lng como `Decimal(9,6)` y la agregación se calcula en el servicio, no en SQL.
+- Textos largos con `@db.Text`; polígonos de barrios como `Json` (GeoJSON).
+- CI: servicio `mysql:8` en GitHub Actions para `prisma migrate deploy` y los tests e2e.
 
-### 6.1 Alta del ticket (formulario público)
+### 6.2 Modelo de datos (borrador para `schema.prisma`)
 
-| Categoría | Modo | Datos obligatorios |
-|---|---|---|
-| `ABUSO_SEXUAL`, `VIOLENCIA_GENERO`, `VIOLENCIA_INTRAFAMILIAR` | Anónimo permitido | Categoría, ubicación, fecha/franja, víctima o testigo |
-| `ROBO`, `HURTO`, `HURTO_VEHICULO`, `LESIONES`, `HOMICIDIO`, `ESTAFA_ONLINE` | Con contacto | Lo anterior + nombre, teléfono o email, horario preferido y declaración jurada aceptada |
+| Entidad | Campos clave |
+|---|---|
+| `User` | email, passwordHash, nombre, `role`, `organismo` (`SALUD` / `POLICIA` / null), activo, `barrioId?` |
+| `Barrio` | nombre, localidad, poblacion, `poligono Json`, centroLat/Lng |
+| `CategoriaConfig` | `categoria` (enum), permiteAnonimo, requiereContacto, `organismos` (Salud/Policía), recursos de urgencia |
+| `Incidente` | oficial: categoria, fecha, franja, lat/lng, barrioId, fuente, `sintetico` |
+| `Ticket` | categoria, modo (`ANONIMO` / `CON_CONTACTO`), rol (`VICTIMA` / `TESTIGO`), fecha, franja, lat/lng, barrioId, relato `@db.Text?`, quiereDenunciar, declaracionAceptada, estado, `sintetico`, `deletedAt` |
+| `TicketDerivacion` | ticketId, organismo (un ticket de abuso sexual tiene dos) |
+| `ContactoTicket` | ticketId, nombre/telefono/email/horario **cifrados**, `deletedAt` |
+| `NotaTicket` | ticketId, autorId, texto |
+| `HistorialEstado` | ticketId, de, a, autorId, fecha (auditoría) |
+| `ServicioAsistencia` | nombre, tipo (comisaría, centro de salud, CAV, línea), teléfono, lat/lng, barrioId |
+| `ReglaRecomendacion` | categoria, franja?, condición (tendencia/umbral), texto |
 
-- Validaciones: ubicación dentro de Jujuy, rate limit de 5 tickets por IP por hora, sin adjuntos.
-- Un ticket anónimo con "quiero denunciar" pide los datos de contacto y pasa a modo con contacto.
-- El ticket anónimo es solo un envío: no tiene estados ni respuesta.
+### 6.3 Alta del ticket (`POST /api/tickets`, público)
 
-### 6.2 Derivación automática por categoría
+1. Valida con `CategoriaConfig`: si la categoría exige contacto, rechaza sin nombre, contacto y declaración jurada.
+2. Valida que la ubicación esté dentro del ejido de San Salvador de Jujuy y asigna el `barrioId` (punto en polígono); fuera de la ciudad se rechaza con 422.
+3. Rate limit de 5 tickets por IP por hora.
+4. Si `quiereDenunciar`, el modo pasa a `CON_CONTACTO`.
+5. Cifra el contacto, crea las derivaciones según la categoría y emite `ticket:nuevo` por Socket.IO **solo** a la sala del organismo, sin datos personales.
+6. Emite `mapa:actualizado` (conteo + timestamp) a todos.
+7. Respuesta: confirmación y recursos de urgencia (911, 144, 102). Sin código de seguimiento.
 
-- `ABUSO_SEXUAL` → Salud y Policía.
-- Resto de categorías → Policía (en violencia de género e intrafamiliar se muestran recursos de Salud).
-- Al crearse, se emite un aviso por Socket.IO a los operadores del organismo destino, sin datos personales.
+### 6.4 Operadores
 
-### 6.3 Ciclo de vida del ticket con contacto
+- `GET /api/operador/tickets`: solo los derivados a su organismo, con filtros por estado y categoría.
+- `GET /api/operador/tickets/:id`: detalle con el contacto descifrado; el acceso queda auditado.
+- `PATCH /api/operador/tickets/:id/estado`: solo transiciones válidas hacia adelante (`NUEVO → CONTACTADO → DERIVADO → CERRADO`) y registra `HistorialEstado`.
+- `POST /api/operador/tickets/:id/notas`.
 
-`NUEVO → CONTACTADO → DERIVADO → CERRADO`
+### 6.5 Mapa de calor (referencia: captura UANL, "Mapa de calor. Colinas de San Bernabé")
 
-- Solo el operador del organismo destino cambia el estado y agrega notas internas.
-- Cada cambio queda auditado (quién y cuándo).
+- **Backend** `GET /api/mapa/calor?categoria&desde&hasta&franja&fuente`: une incidentes y tickets, los agrupa en una grilla de ~100 m y devuelve `[lat, lng, peso]` del centro de cada celda. **Nunca coordenadas exactas.**
+- **Vista inicial:** toda la ciudad de San Salvador de Jujuy; al elegir un barrio se acerca a él.
+- **Frontend:** `leaflet.heat` con un radio de ~150 m a zoom de barrio, sobre Carto Positron.
+- **Rampa de 10 clases** de verde a rojo, con leyenda "Concentración Baja / Media / Alta" como en la referencia.
+- **Elementos cartográficos:** contorno del barrio seleccionado, flecha de norte, escala gráfica y la fuente "Datos oficiales + reportes ciudadanos no verificados".
+- **Puntos:** solo `ServicioAsistencia` (comisarías, centros de salud, CAV). Sin marcadores de hechos.
+- **Filtros:** categoría, período, franja horaria y fuente.
+- **Panel lateral:** conteo, tasa por 1.000 habitantes, variación porcentual contra el período anterior y recomendaciones situacionales del barrio.
+- **Tiempo real:** al recibir `mapa:actualizado`, se vuelve a pedir la capa.
 
-### 6.4 Quién ve qué
+### 6.6 Estadísticas (`CIUDADANO`, `ANALISTA`, `ADMIN`)
+
+- `GET /api/estadisticas/tendencias`: serie mensual por categoría (solo meses completos, resta de meses sin desborde de día).
+- `GET /api/estadisticas/barrios`: ranking de todos los barrios de la ciudad por tasa.
+- `GET /api/estadisticas/franjas`: distribución por franja horaria.
+- `GET /api/recomendaciones?barrioId`: reglas que se cumplen, explicables.
+
+### 6.7 Administración (`ADMIN`)
+
+CRUD de `User` (crea operadores y analistas), `Barrio`, `CategoriaConfig`, `ServicioAsistencia`, `ReglaRecomendacion` y carga masiva de `Incidente` (JSON hasta 5.000 filas, body de 5 MB). Supresión física de un ticket a pedido.
+
+### 6.8 Quién ve qué
 
 | Rol | Ve |
 |---|---|
-| `PUBLICO` | Mapa agregado, formulario, directorio |
-| `CIUDADANO` | Lo anterior + análisis de su zona + solicitud de contacto a una empresa |
-| `OPERADOR_SALUD` / `OPERADOR_POLICIA` | Solo los tickets de su organismo, con el contacto descifrado |
-| `ANALISTA` | Todo agregado: tendencias y recomendaciones |
-| `ADMIN` | Usuarios, reglas, empresas, cargas oficiales |
-| Empresa de seguridad | Dashboard agregado de sus zonas + solicitudes de contacto con consentimiento |
+| `PUBLICO` | Mapa agregado, formulario, servicios de asistencia |
+| `CIUDADANO` (P1) | Lo anterior + análisis de toda la ciudad: ranking de barrios, tendencias, franjas y recomendaciones (solo agregados) |
+| `OPERADOR_SALUD` / `OPERADOR_POLICIA` | Solo tickets de su organismo, con el contacto |
+| `ANALISTA` | Estadísticas y recomendaciones agregadas |
+| `ADMIN` | Todo lo anterior + administración |
 
-Las empresas nunca ven tickets ni datos personales.
+### 6.9 Seguridad transversal
 
-### 6.5 Mapa y estadísticas
+Login con throttling (5 intentos/min), CORS con varios orígenes (`CORS_ORIGIN` separado por comas, también en Socket.IO), `ENCRYPTION_KEY` de 32 bytes en una variable de entorno, Swagger en `/api/docs`, nunca loguear datos de contacto.
 
-- Una sola capa: incidentes oficiales + tickets, agregados en celdas de ~1 km².
-- Indicadores: conteo, tasa por 1.000 habitantes, variación porcentual contra el período anterior, picos por franja horaria y recomendaciones situacionales.
-- Sin umbral mínimo (`MIN_COUNT=1`, configurable) y leyenda "incluye reportes ciudadanos no verificados".
+### 6.10 Pantallas (frontend)
 
-### 6.6 Solicitud de contacto con una empresa (`CIUDADANO`)
+| Ruta | Pantalla | Acceso |
+|---|---|---|
+| `/` | Mapa de calor + panel lateral + filtros | Público |
+| `/reportar` | Formulario por pasos: categoría → ubicación en el mapa → detalle → contacto (si corresponde) → confirmación con recursos | Público |
+| `/login` | Login | Público |
+| `/operador` | Bandeja, detalle, estados y notas | Operadores |
+| `/estadisticas` | Análisis de toda la ciudad: tendencias, ranking de barrios y franjas (Recharts) | Ciudadano (P1), Analista, Admin |
+| `/admin/*` | CRUD de entidades | Admin |
 
-1. El ciudadano elige una empresa del directorio y marca el consentimiento explícito.
-2. Se crea una `SolicitudContactoEmpresa` con solo los datos que eligió compartir.
-3. Solo esa empresa la recibe. La solicitud se cobra por unidad o va incluida en el plan.
+## 7. Orquestación del código
 
-### 6.7 Datos
+Cada tarea = **un issue + una rama + un PR** con CI verde (`CONTRIBUTING.md`). Las fases se hacen en orden; dentro de cada fase, las tareas marcadas ∥ pueden correr en paralelo (por ejemplo, una persona con Claude Code en el frontend y otra en el backend).
 
-- Contacto cifrado en reposo.
-- Borrado lógico por defecto; borrado físico si la persona pide la supresión (Ley 25.326, art. 16).
-- Datos de demo sintéticos, marcados con `sintetico = true`.
+| Fase | Tarea | Rama | Depende de | Hecho cuando |
+|---|---|---|---|---|
+| 0 | T001 Reset del backend: NestJS limpio, Prisma con MySQL, Docker, `.env.example`, CI con servicio MySQL (hoy `ci.yml` usa una URL de PostgreSQL) | `chore/reset-backend-mysql` | — | `prisma validate`, lint, build y test en verde |
+| 0 ∥ | T002 Base del frontend: Vite + Tailwind + `figma.css` + shadcn/ui, router, layout, cliente Axios | `feat/frontend-base` | — | lint, typecheck y build en verde |
+| 1 | T003 Esquema Prisma completo (§6.2) y primera migración | `feat/prisma-schema` | T001 | `migrate dev` aplica en MySQL limpio |
+| 2 | T004 Auth JWT por roles, throttling, CRUD de usuarios (ADMIN) | `feat/auth-roles` | T003 | tests de guardas por rol |
+| 2 ∥ | T005 Tickets: alta pública, reglas por categoría, cifrado, derivación, Socket.IO | `feat/tickets` | T003 | tests de validación por categoría y derivación |
+| 2 ∥ | T006 Mapa de calor, estadísticas y recomendaciones (§6.5 y §6.6) | `feat/mapa-estadisticas` | T003 | tests de agrupación (~100 m, sin coordenadas exactas) |
+| 3 | T007 Endpoints de operador: bandeja, estados, notas, auditoría | `feat/operador` | T004, T005 | tests de transiciones y de acceso por organismo |
+| 3 ∥ | T008 Endpoints de admin: barrios, categorías, servicios, reglas, carga masiva, supresión | `feat/admin-api` | T004 | tests e2e por rol |
+| 4 ∥ | T009 Pantalla de mapa KDE, leyenda, filtros, panel lateral, tiempo real | `feat/front-mapa` | T002, T006 | se ve como la referencia, con datos de prueba |
+| 4 ∥ | T010 Formulario público por pasos | `feat/front-reportar` | T002, T005 | crea tickets anónimos y con contacto |
+| 4 ∥ | T011 Panel de operador | `feat/front-operador` | T002, T007 | cambia estados y agrega notas |
+| 4 ∥ | T012 Estadísticas y panel admin | `feat/front-admin` | T002, T006, T008 | CRUD completo desde la UI |
+| 5 | T013 **Precarga de datos ficticios**: barrios con polígonos, incidentes, tickets, servicios, reglas, usuarios demo | `feat/seed-demo` | todas las anteriores | `npm run seed` deja la demo lista |
+| 6 | T014 Deploy en Railway (MySQL) y Vercel | `chore/deploy` | T013 | URLs públicas funcionando |
+| 6 ∥ | T015 Pitch y guion de la demo | `docs/pitch` | — | guion en `docs/` |
+| P1 | T016 Rol `CIUDADANO`: registro y acceso a `/estadisticas` de toda la ciudad | `feat/ciudadano` | T013 | ve todos los barrios, solo agregados |
 
-## 7. Alcance para la entrega de hoy (MVP)
+**Reglas para agentes (Devin, Claude Code):**
+- Leer `AGENTS.md`, este plan y la spec antes de empezar una tarea.
+- No crear datos de demo antes de T013; los tests usan fixtures.
+- No agregar nada de empresas de seguridad.
+- Nunca enviar coordenadas exactas ni datos de contacto a endpoints públicos o eventos de Socket.IO.
+- Si una decisión de este plan no alcanza, preguntar antes de inventar.
 
-Prioridad P0 (demo):
-1. Mergear los arreglos de review del backend y el frontend existente.
-2. Modelo `Ticket` en Prisma (categoría, modo anónimo o con contacto, víctima o testigo, ubicación, celda, franja, estado, organismo destino, `sintetico`, `deletedAt`) más `ContactoTicket` cifrado y `NotaTicket`.
-3. `POST /api/tickets` público, con reglas por categoría, declaración jurada y rate limit.
-4. Derivación automática a `OPERADOR_SALUD` u `OPERADOR_POLICIA`, panel de operador con estados y notas, y notificación por Socket.IO.
-5. Heatmap y tendencias combinando incidentes oficiales y tickets, en una capa.
-6. Formulario público de reporte en el frontend (pasos: categoría → ubicación en el mapa → detalle → contacto si corresponde → confirmación).
-7. Seed de tickets sintéticos.
+## 8. Herramientas UX/UI para Claude Code
 
-Prioridad P1 (si alcanza el tiempo):
-8. Rol `CIUDADANO`: registro, análisis de su zona y botón "quiero que una empresa me contacte" con consentimiento.
-9. Directorio de empresas de seguridad (datos de demo).
-10. Deploy en Railway y Vercel.
+Se instalan en la máquina de quien ejecuta Claude Code. Si el marketplace oficial no aparece en `/plugin`, agregarlo con `/plugin marketplace add anthropics/claude-plugins-official`.
 
-Fuera de alcance: adjuntos, categorías nuevas (acoso, violencia institucional, maltrato infantil), pagos, MercadoPago, OSRM.
+| Herramienta | Para qué | Instalación |
+|---|---|---|
+| Plugin `frontend-design` (oficial de Anthropic) | Interfaces cuidadas, sin estética genérica | `/plugin install frontend-design@claude-plugins-official` |
+| Plugin `playwright` (Microsoft) | Que Claude abra la app, saque capturas y verifique la UI | `/plugin install playwright@claude-plugins-official` |
+| Plugin `figma` | Leer diseños y tokens desde Figma | `/plugin install figma@claude-plugins-official` |
+| MCP de shadcn/ui | Buscar y agregar componentes del registro | `npx shadcn@latest mcp init --client claude` |
 
-## 8. Seguimiento
+Librerías del proyecto (§6.1): shadcn/ui, Radix, Recharts, React Hook Form + Zod, Sonner, `leaflet.heat`, Lucide.
 
-Cada ítem del §7 es un **issue** de GitHub en el Project del repo, con una rama `feat/…` o `fix/…` y un PR propio, según `CONTRIBUTING.md`.
+## 9. Seguimiento
+
+Las tareas T001–T016 de §7 son los issues [#19–#34](https://github.com/Matias-Churquina/Hackaton-Tren-Solar/issues) (T001 = #19 … T016 = #34). Los issues #3–#16 del plan anterior quedaron cerrados.
