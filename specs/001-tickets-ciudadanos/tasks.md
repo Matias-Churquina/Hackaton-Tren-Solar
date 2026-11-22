@@ -17,7 +17,7 @@ Cada tarea corresponde a un issue de GitHub y a una rama propia. Orden, ramas y 
 - [ ] T012 Frontend: estadísticas y panel admin
 - [ ] T013 Precarga de datos ficticios (solo con la lógica completa)
 - [ ] T014 Deploy en Railway (backend + MySQL) y Vercel
-- [ ] T015 Pitch y guion de la demo
+- [x] T015 Pitch y guion de la demo (`docs/PITCH.md`)
 
 ## P1, si alcanza el tiempo
 - [ ] T016 Rol `CIUDADANO`: registro y análisis de toda la ciudad (`/estadisticas`)
