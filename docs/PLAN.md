@@ -96,7 +96,64 @@ agregado** y la **conexión voluntaria**.
 | Socios | Ministerio de Salud, Policía de Jujuy, municipios, ONGs de asistencia a víctimas |
 | Costos | Hosting (Railway/Vercel), desarrollo, soporte de operadores, cumplimiento legal |
 
-## 6. Alcance para la entrega de hoy (MVP)
+## 6. Lógica de negocio
+
+### 6.1 Alta del ticket (formulario público)
+
+| Categoría | Modo | Datos obligatorios |
+|---|---|---|
+| `ABUSO_SEXUAL`, `VIOLENCIA_GENERO`, `VIOLENCIA_INTRAFAMILIAR` | Anónimo permitido | Categoría, ubicación, fecha/franja, víctima o testigo |
+| `ROBO`, `HURTO`, `HURTO_VEHICULO`, `LESIONES`, `HOMICIDIO`, `ESTAFA_ONLINE` | Con contacto | Lo anterior + nombre, teléfono o email, horario preferido y declaración jurada aceptada |
+
+- Validaciones: ubicación dentro de Jujuy, rate limit de 5 tickets por IP por hora, sin adjuntos.
+- Un ticket anónimo con "quiero denunciar" pide los datos de contacto y pasa a modo con contacto.
+- El ticket anónimo es solo un envío: no tiene estados ni respuesta.
+
+### 6.2 Derivación automática por categoría
+
+- `ABUSO_SEXUAL` → Salud y Policía.
+- Resto de categorías → Policía (en violencia de género e intrafamiliar se muestran recursos de Salud).
+- Al crearse, se emite un aviso por Socket.IO a los operadores del organismo destino, sin datos personales.
+
+### 6.3 Ciclo de vida del ticket con contacto
+
+`NUEVO → CONTACTADO → DERIVADO → CERRADO`
+
+- Solo el operador del organismo destino cambia el estado y agrega notas internas.
+- Cada cambio queda auditado (quién y cuándo).
+
+### 6.4 Quién ve qué
+
+| Rol | Ve |
+|---|---|
+| `PUBLICO` | Mapa agregado, formulario, directorio |
+| `CIUDADANO` | Lo anterior + análisis de su zona + solicitud de contacto a una empresa |
+| `OPERADOR_SALUD` / `OPERADOR_POLICIA` | Solo los tickets de su organismo, con el contacto descifrado |
+| `ANALISTA` | Todo agregado: tendencias y recomendaciones |
+| `ADMIN` | Usuarios, reglas, empresas, cargas oficiales |
+| Empresa de seguridad | Dashboard agregado de sus zonas + solicitudes de contacto con consentimiento |
+
+Las empresas nunca ven tickets ni datos personales.
+
+### 6.5 Mapa y estadísticas
+
+- Una sola capa: incidentes oficiales + tickets, agregados en celdas de ~1 km².
+- Indicadores: conteo, tasa por 1.000 habitantes, variación porcentual contra el período anterior, picos por franja horaria y recomendaciones situacionales.
+- Sin umbral mínimo (`MIN_COUNT=1`, configurable) y leyenda "incluye reportes ciudadanos no verificados".
+
+### 6.6 Solicitud de contacto con una empresa (`CIUDADANO`)
+
+1. El ciudadano elige una empresa del directorio y marca el consentimiento explícito.
+2. Se crea una `SolicitudContactoEmpresa` con solo los datos que eligió compartir.
+3. Solo esa empresa la recibe. La solicitud se cobra por unidad o va incluida en el plan.
+
+### 6.7 Datos
+
+- Contacto cifrado en reposo.
+- Borrado lógico por defecto; borrado físico si la persona pide la supresión (Ley 25.326, art. 16).
+- Datos de demo sintéticos, marcados con `sintetico = true`.
+
+## 7. Alcance para la entrega de hoy (MVP)
 
 Prioridad P0 (demo):
 1. Mergear los arreglos de review del backend y el frontend existente.
@@ -114,6 +171,6 @@ Prioridad P1 (si alcanza el tiempo):
 
 Fuera de alcance: adjuntos, categorías nuevas (acoso, violencia institucional, maltrato infantil), pagos, MercadoPago, OSRM.
 
-## 7. Seguimiento
+## 8. Seguimiento
 
-Cada ítem del §6 es un **issue** de GitHub en el Project del repo, con una rama `feat/…` o `fix/…` y un PR propio, según `CONTRIBUTING.md`.
+Cada ítem del §7 es un **issue** de GitHub en el Project del repo, con una rama `feat/…` o `fix/…` y un PR propio, según `CONTRIBUTING.md`.
