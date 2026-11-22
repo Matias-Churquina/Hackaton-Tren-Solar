@@ -20,7 +20,7 @@ Cada tarea corresponde a un issue de GitHub y a una rama propia. Orden, ramas y 
 - [ ] T015 Pitch y guion de la demo
 
 ## P1, si alcanza el tiempo
-- [ ] T016 Rol `CIUDADANO` y `/mi-zona`
+- [ ] T016 Rol `CIUDADANO`: registro y análisis de toda la ciudad (`/estadisticas`)
 
 ## Fuera de alcance
-Empresas de seguridad (rol, directorio, solicitudes de contacto), adjuntos, pagos, OSRM.
+Resto de la provincia (el alcance es la ciudad de San Salvador de Jujuy), empresas de seguridad (rol, directorio, solicitudes de contacto), adjuntos, pagos, OSRM.

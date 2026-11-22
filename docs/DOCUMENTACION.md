@@ -1,5 +1,7 @@
 # Documentación — Inteligencia territorial para la prevención del delito (Jujuy)
 
+> **Nota:** las secciones de roles, modelo de datos y arquitectura de este documento describen la primera versión. La versión vigente (MySQL, tickets, operadores, alcance San Salvador de Jujuy) está en [PLAN.md](PLAN.md), que manda ante cualquier diferencia.
+
 ## 1. Problema
 
 En Jujuy no hay un portal abierto con estadísticas delictivas detalladas. La fuente

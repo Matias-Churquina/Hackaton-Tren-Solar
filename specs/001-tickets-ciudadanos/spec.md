@@ -37,14 +37,14 @@ El mapa de calor y las tendencias combinan los incidentes oficiales y los ticket
 2. **Then** el mapa muestra la leyenda "incluye reportes ciudadanos no verificados".
 
 ### User Story 4 - Ciudadano con cuenta (Priority: P2)
-Un `CIUDADANO` registrado ve el análisis de su zona (tendencia, franjas de más riesgo, recomendaciones).
+Un `CIUDADANO` registrado ve el análisis de toda la ciudad de San Salvador de Jujuy: ranking de barrios, tendencias, franjas de más riesgo y recomendaciones.
 
 **Acceptance Scenarios**:
-1. **Given** un ciudadano con barrio asignado, **Then** ve tendencia, franjas y recomendaciones de su barrio, sin datos individuales.
+1. **Given** un ciudadano con sesión iniciada, **Then** ve las estadísticas de todos los barrios de la ciudad, solo agregadas y sin datos individuales.
 
 ### Edge Cases
 - Envíos masivos desde una misma IP: rate limit (429).
-- Ubicación fuera de Jujuy: se rechaza.
+- Ubicación fuera de San Salvador de Jujuy: se rechaza (422).
 - Pedido de supresión de datos: borrado lógico (`deletedAt`) inmediato, más supresión física de los datos de contacto cuando la persona lo pide (Ley 25.326, art. 16).
 
 ## Requirements
@@ -61,7 +61,7 @@ Un `CIUDADANO` registrado ve el análisis de su zona (tendencia, franjas de más
 - **FR-009**: Rate limit de 5 tickets por IP por hora.
 - **FR-010**: Sin adjuntos en el MVP.
 - **FR-011**: El seed genera tickets sintéticos (`sintetico = true`).
-- **FR-012** (P1): Rol `CIUDADANO` con registro y análisis de su barrio.
+- **FR-012** (P1): Rol `CIUDADANO` con registro y acceso al análisis agregado de toda la ciudad.
 
 ### Key Entities
 - **Ticket**: categoría, modo (`ANONIMO` | `CON_CONTACTO`), rol de quien reporta (`VICTIMA` | `TESTIGO`), fecha del hecho, franja, lat/lng, zona, relato, quiere denunciar, declaración aceptada, estado, organismos destino, `sintetico`, `deletedAt`.

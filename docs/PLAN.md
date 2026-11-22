@@ -8,7 +8,7 @@
 ## 1. Visión
 
 Una plataforma web que combina **datos oficiales agregados** (SNIC) con **reportes
-ciudadanos** para construir un mapa de calor del delito en Jujuy, un dashboard
+ciudadanos** para construir un mapa de calor del delito en **San Salvador de Jujuy**, un dashboard
 estadístico y recomendaciones de prevención situacional. Quien sufrió un delito o un
 abuso puede reportarlo, de forma **anónima** o pidiendo que **alguien la contacte**.
 El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categoría.
@@ -26,6 +26,7 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 
 | # | Tema | Decisión |
 |---|---|---|
+| 0 | Alcance territorial | **Ciudad de San Salvador de Jujuy** (todos sus barrios). El resto de la provincia queda para una fase posterior |
 | 1 | Base de datos | **MySQL 8** con **Prisma** como ORM (reemplaza a PostgreSQL) |
 | 2 | Código existente | Se reemplaza por completo donde haga falta |
 | 3 | Empresas de seguridad | **Fuera de alcance** (ni rol, ni directorio, ni solicitudes de contacto). Quedan como fase 2 del modelo de negocio |
@@ -33,7 +34,7 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 | 5 | Datos de demo | Precarga completa de **datos ficticios** (`sintetico = true`), que se agrega **recién cuando la lógica esté completa** (fase 5). Hasta entonces, los tests usan fixtures propios |
 | 6 | Formulario | Público, sin cuenta |
 | 7 | Datos según agravante | **Robo, hurto, hurto de vehículo, lesiones, homicidio, estafa:** nombre, un contacto y declaración jurada obligatorios. **Abuso sexual, violencia de género, violencia intrafamiliar:** se permite el modo **anónimo** |
-| 8 | Roles | `PUBLICO` (sin cuenta) · `CIUDADANO` (P1: análisis de su zona) · `OPERADOR_SALUD` · `OPERADOR_POLICIA` (cada uno ve solo sus tickets) · `ANALISTA` (todo agregado) · `ADMIN` (gestiona todo y crea las cuentas de operadores) |
+| 8 | Roles | `PUBLICO` (sin cuenta) · `CIUDADANO` (P1: análisis de **toda la ciudad**, barrio por barrio) · `OPERADOR_SALUD` · `OPERADOR_POLICIA` (cada uno ve solo sus tickets) · `ANALISTA` (todo agregado) · `ADMIN` (gestiona todo y crea las cuentas de operadores) |
 | 9 | Derivación | Automática por categoría y configurable por ADMIN: abuso sexual → **Salud y Policía**; violencia de género e intrafamiliar → **Policía** (con recursos de Salud); resto → **Policía** |
 | 10 | Categorías | `HOMICIDIO`, `LESIONES`, `VIOLENCIA_GENERO`, `VIOLENCIA_INTRAFAMILIAR`, `ABUSO_SEXUAL`, `ROBO`, `HURTO`, `HURTO_VEHICULO`, `ESTAFA_ONLINE`. Acoso, violencia institucional y maltrato infantil quedan fuera |
 | 11 | Ubicación | Se guarda el punto que marca la persona, visible solo para el operador asignado. Al público llega **agrupada** (ver §6.5) |
@@ -58,7 +59,7 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 
 ## 5. Modelo de negocio
 
-- **Ciudadanía (B2C):** gratis. Reportar, ver el mapa y (P1) el análisis de su zona.
+- **Ciudadanía (B2C):** gratis. Reportar, ver el mapa y (P1) el análisis de toda la ciudad.
 - **Estado (B2G):** licencia del panel de operadores para Salud y Policía, y reportes agregados para políticas públicas. Es el cliente del MVP.
 - **Fase 2 (fuera de alcance hoy):** empresas de seguridad de Jujuy (suscripción por zonas a datos agregados, solicitudes de contacto con consentimiento), aseguradoras e inmobiliarias.
 - **Regla de oro:** ningún dato personal se comparte con privados.
@@ -100,7 +101,7 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 ### 6.3 Alta del ticket (`POST /api/tickets`, público)
 
 1. Valida con `CategoriaConfig`: si la categoría exige contacto, rechaza sin nombre, contacto y declaración jurada.
-2. Valida que la ubicación esté dentro de Jujuy y asigna el `barrioId` (punto en polígono).
+2. Valida que la ubicación esté dentro del ejido de San Salvador de Jujuy y asigna el `barrioId` (punto en polígono); fuera de la ciudad se rechaza con 422.
 3. Rate limit de 5 tickets por IP por hora.
 4. Si `quiereDenunciar`, el modo pasa a `CON_CONTACTO`.
 5. Cifra el contacto, crea las derivaciones según la categoría y emite `ticket:nuevo` por Socket.IO **solo** a la sala del organismo, sin datos personales.
@@ -117,6 +118,7 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 ### 6.5 Mapa de calor (referencia: captura UANL, "Mapa de calor. Colinas de San Bernabé")
 
 - **Backend** `GET /api/mapa/calor?categoria&desde&hasta&franja&fuente`: une incidentes y tickets, los agrupa en una grilla de ~100 m y devuelve `[lat, lng, peso]` del centro de cada celda. **Nunca coordenadas exactas.**
+- **Vista inicial:** toda la ciudad de San Salvador de Jujuy; al elegir un barrio se acerca a él.
 - **Frontend:** `leaflet.heat` con un radio de ~150 m a zoom de barrio, sobre Carto Positron.
 - **Rampa de 10 clases** de verde a rojo, con leyenda "Concentración Baja / Media / Alta" como en la referencia.
 - **Elementos cartográficos:** contorno del barrio seleccionado, flecha de norte, escala gráfica y la fuente "Datos oficiales + reportes ciudadanos no verificados".
@@ -125,10 +127,10 @@ El caso se deriva al **Ministerio de Salud** o a la **Policía** según la categ
 - **Panel lateral:** conteo, tasa por 1.000 habitantes, variación porcentual contra el período anterior y recomendaciones situacionales del barrio.
 - **Tiempo real:** al recibir `mapa:actualizado`, se vuelve a pedir la capa.
 
-### 6.6 Estadísticas (`ANALISTA`, `ADMIN`)
+### 6.6 Estadísticas (`CIUDADANO`, `ANALISTA`, `ADMIN`)
 
 - `GET /api/estadisticas/tendencias`: serie mensual por categoría (solo meses completos, resta de meses sin desborde de día).
-- `GET /api/estadisticas/barrios`: ranking por tasa.
+- `GET /api/estadisticas/barrios`: ranking de todos los barrios de la ciudad por tasa.
 - `GET /api/estadisticas/franjas`: distribución por franja horaria.
 - `GET /api/recomendaciones?barrioId`: reglas que se cumplen, explicables.
 
@@ -141,7 +143,7 @@ CRUD de `User` (crea operadores y analistas), `Barrio`, `CategoriaConfig`, `Serv
 | Rol | Ve |
 |---|---|
 | `PUBLICO` | Mapa agregado, formulario, servicios de asistencia |
-| `CIUDADANO` (P1) | Lo anterior + análisis de su barrio |
+| `CIUDADANO` (P1) | Lo anterior + análisis de toda la ciudad: ranking de barrios, tendencias, franjas y recomendaciones (solo agregados) |
 | `OPERADOR_SALUD` / `OPERADOR_POLICIA` | Solo tickets de su organismo, con el contacto |
 | `ANALISTA` | Estadísticas y recomendaciones agregadas |
 | `ADMIN` | Todo lo anterior + administración |
@@ -158,9 +160,8 @@ Login con throttling (5 intentos/min), CORS con varios orígenes (`CORS_ORIGIN` 
 | `/reportar` | Formulario por pasos: categoría → ubicación en el mapa → detalle → contacto (si corresponde) → confirmación con recursos | Público |
 | `/login` | Login | Público |
 | `/operador` | Bandeja, detalle, estados y notas | Operadores |
-| `/estadisticas` | Tendencias, ranking y franjas (Recharts) | Analista, Admin |
+| `/estadisticas` | Análisis de toda la ciudad: tendencias, ranking de barrios y franjas (Recharts) | Ciudadano (P1), Analista, Admin |
 | `/admin/*` | CRUD de entidades | Admin |
-| `/mi-zona` | Análisis del barrio (P1) | Ciudadano |
 
 ## 7. Orquestación del código
 
@@ -168,7 +169,7 @@ Cada tarea = **un issue + una rama + un PR** con CI verde (`CONTRIBUTING.md`). L
 
 | Fase | Tarea | Rama | Depende de | Hecho cuando |
 |---|---|---|---|---|
-| 0 | T001 Reset del backend: NestJS limpio, Prisma con MySQL, Docker, `.env.example`, CI con servicio MySQL | `chore/reset-backend-mysql` | — | `prisma validate`, lint, build y test en verde |
+| 0 | T001 Reset del backend: NestJS limpio, Prisma con MySQL, Docker, `.env.example`, CI con servicio MySQL (hoy `ci.yml` usa una URL de PostgreSQL) | `chore/reset-backend-mysql` | — | `prisma validate`, lint, build y test en verde |
 | 0 ∥ | T002 Base del frontend: Vite + Tailwind + `figma.css` + shadcn/ui, router, layout, cliente Axios | `feat/frontend-base` | — | lint, typecheck y build en verde |
 | 1 | T003 Esquema Prisma completo (§6.2) y primera migración | `feat/prisma-schema` | T001 | `migrate dev` aplica en MySQL limpio |
 | 2 | T004 Auth JWT por roles, throttling, CRUD de usuarios (ADMIN) | `feat/auth-roles` | T003 | tests de guardas por rol |
@@ -183,7 +184,7 @@ Cada tarea = **un issue + una rama + un PR** con CI verde (`CONTRIBUTING.md`). L
 | 5 | T013 **Precarga de datos ficticios**: barrios con polígonos, incidentes, tickets, servicios, reglas, usuarios demo | `feat/seed-demo` | todas las anteriores | `npm run seed` deja la demo lista |
 | 6 | T014 Deploy en Railway (MySQL) y Vercel | `chore/deploy` | T013 | URLs públicas funcionando |
 | 6 ∥ | T015 Pitch y guion de la demo | `docs/pitch` | — | guion en `docs/` |
-| P1 | T016 Rol `CIUDADANO` y `/mi-zona` | `feat/ciudadano` | T013 | — |
+| P1 | T016 Rol `CIUDADANO`: registro y acceso a `/estadisticas` de toda la ciudad | `feat/ciudadano` | T013 | ve todos los barrios, solo agregados |
 
 **Reglas para agentes (Devin, Claude Code):**
 - Leer `AGENTS.md`, este plan y la spec antes de empezar una tarea.
