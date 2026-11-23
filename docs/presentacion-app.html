@@ -18,10 +18,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#dfe6ea;color:var(--foreground);
   font-family:Geist,"Geist Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-.stage{position:fixed;inset:0 0 56px;overflow:hidden}
-.deck{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center}
-.slide{position:absolute;inset:0;background:var(--background);border-radius:14px;overflow:hidden;
-  box-shadow:0 24px 60px rgba(18,60,78,.18),0 0 0 1px var(--border);display:flex;flex-direction:column;
+.stage{position:fixed;inset:0;overflow:hidden}
+.deck{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0}
+.slide{position:absolute;inset:0;background:var(--background);overflow:hidden;display:flex;flex-direction:column;
   opacity:0;transform:translateX(30px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
 .slide.active{opacity:1;transform:none;pointer-events:auto}
 .slide.prev{transform:translateX(-30px)}
@@ -29,17 +28,8 @@ html,body{height:100%;overflow:hidden;background:#dfe6ea;color:var(--foreground)
 .hdr{height:64px;flex:none;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(255,255,255,.95)}
 .logo{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--primary);font-size:16px}
 .logo svg{width:24px;height:24px}
-.nav{display:flex;gap:4px;font-size:14px;font-weight:500}
-.nav span{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px}
-.nav span.on{background:var(--accent);color:var(--primary)}
-.nav span.cta{background:var(--primary);color:var(--primary-foreground)}
-.nav svg{width:16px;height:16px}
 .sim{font-size:12px;font-weight:600;color:#8a5a00;background:#fff6db;border:1px solid #f2d78a;border-radius:999px;padding:4px 10px;margin-left:12px}
-.body{flex:1;padding:36px 64px 0;display:flex;flex-direction:column;justify-content:center;min-height:0}
-.foot{height:46px;flex:none;border-top:1px solid var(--border);background:var(--muted);display:flex;align-items:center;justify-content:space-between;padding:0 40px;font-size:13px;color:var(--muted-foreground)}
-.foot .tel{display:flex;gap:22px}
-.foot .tel b{color:var(--foreground);font-size:14px;margin-right:4px}
-.foot .tel svg{width:14px;height:14px;color:var(--primary);vertical-align:-2px;margin-right:4px}
+.body{flex:1;padding:24px 72px 64px;display:flex;flex-direction:column;justify-content:center;min-height:0}
 .eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}
 h1{font-size:60px;line-height:1.04;font-weight:700;letter-spacing:-.025em}
 h2{font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin-bottom:28px}
@@ -105,6 +95,18 @@ td:first-child{font-weight:600}
 .cta-box h3{font-size:24px;font-weight:700;line-height:1.25}
 .cta-box p{color:#cfe3ec;font-size:15px;margin-top:8px;line-height:1.5}
 .ramp{height:8px;border-radius:4px;background:var(--ramp)}
+/* informes agénticos */
+.agent{display:grid;grid-template-columns:1fr 36px 1.15fr 36px 1.25fr;align-items:stretch}
+.chip{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;background:#e8f1f5;color:var(--primary);margin:2px 4px 2px 0}
+.chip.off{background:#fdecec;color:var(--heat-10);text-decoration:line-through}
+.doc{border:1px solid var(--border);border-radius:8px;background:#fff;padding:10px 12px;font-size:12px;line-height:1.45}
+.doc b{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin-top:6px}
+.doc b:first-child{margin-top:0}
+.tabs{display:flex;gap:4px;margin-bottom:6px}.tabs span{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:#fff}
+.tabs span.on{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)}
+.guard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.guard div{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted-foreground)}
+.guard strong{display:block;color:var(--foreground);font-size:14px}
 /* controles */
 .ctrl{position:fixed;right:18px;bottom:16px;display:flex;align-items:center;gap:8px;z-index:10;font-size:13px;color:var(--muted-foreground)}
 .ctrl button{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--foreground);cursor:pointer;font-size:16px}
@@ -128,32 +130,22 @@ td:first-child{font-weight:600}
   <symbol id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
   <symbol id="users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
   <symbol id="build" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.94 14.06 4 20"/><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></symbol>
 </svg>
 
 <template id="hdr">
   <header class="hdr">
     <div class="logo"><svg><use href="#shield"/></svg>Mapa del delito · San Salvador de Jujuy<span class="sim">Simulación · datos ficticios</span></div>
-    <nav class="nav">
-      <span data-k="mapa"><svg><use href="#pin"/></svg>Mapa</span>
-      <span class="cta"><svg><use href="#mega"/></svg>Reportar un hecho</span>
-      <span data-k="est"><svg><use href="#chart"/></svg>Estadísticas</span>
-      <span data-k="login"><svg><use href="#login"/></svg>Ingresar</span>
-    </nav>
   </header>
-</template>
-<template id="foot">
-  <footer class="foot">
-    <div class="tel"><span><svg><use href="#phone"/></svg><b>911</b>Emergencias</span><span><svg><use href="#phone"/></svg><b>144</b>Violencia de género</span><span><svg><use href="#phone"/></svg><b>102</b>Niñas, niños y adolescentes</span></div>
-    <span>Esta plataforma no reemplaza una denuncia formal.</span>
-  </footer>
 </template>
 
 <div class="bar" id="bar"></div>
 <div class="stage"><div class="deck" id="deck">
 
   <!-- 1. Portada -->
-  <section class="slide" data-nav="mapa">
+  <section class="slide">
     <div class="body" style="flex-direction:row;gap:44px;align-items:center;padding-top:0">
       <div style="flex:1">
         <p class="eyebrow">Inteligencia territorial · Prevención del delito</p>
@@ -191,7 +183,7 @@ td:first-child{font-weight:600}
   </section>
 
   <!-- 2. Problema -->
-  <section class="slide" data-nav="est">
+  <section class="slide">
     <div class="body">
       <p class="eyebrow">El problema</p>
       <h2>Las estadísticas muestran denuncias, no delitos.</h2>
@@ -211,7 +203,7 @@ td:first-child{font-weight:600}
   </section>
 
   <!-- 3. Solución -->
-  <section class="slide" data-nav="mapa">
+  <section class="slide">
     <div class="body">
       <p class="eyebrow">La solución</p>
       <h2>Del reporte a la prevención, en tres pantallas.</h2>
@@ -249,8 +241,55 @@ td:first-child{font-weight:600}
     </div>
   </section>
 
-  <!-- 4. Privacidad -->
-  <section class="slide" data-nav="login">
+  <!-- 4. Informes agénticos -->
+  <section class="slide">
+    <div class="body">
+      <p class="eyebrow">Plus agéntico · Informes</p>
+      <h2>Del relato del vecino al informe para cada organismo.</h2>
+      <div class="agent">
+        <div class="card">
+          <p class="step">1 · Entrada</p><h3>Reporte ciudadano</h3>
+          <p>El agente recibe el relato y datos del hecho, nunca la identidad.</p>
+          <div class="mini">
+            <div><span class="chip">Relato</span><span class="chip">Categoría</span><span class="chip">Franja</span><span class="chip">Barrio</span></div>
+            <div><span class="chip off">Nombre</span><span class="chip off">Teléfono</span><span class="chip off">Punto exacto</span></div>
+            <div class="row" style="display:block;line-height:1.4;font-style:italic">“Me sacaron el celular en la parada de la 19, a la noche, eran dos en moto…”</div>
+          </div>
+        </div>
+        <div class="arrow"><svg><use href="#arrow"/></svg></div>
+        <div class="card">
+          <p class="step">2 · Agente</p><h3>Redacta y estructura</h3>
+          <p>Un modelo de lenguaje (p. ej. Claude Sonnet) extrae los hechos, resume y arma el informe según el organismo destino.</p>
+          <div class="mini">
+            <div class="row"><span>Extraer hechos</span><span class="st d">Listo</span></div>
+            <div class="row"><span>Detectar datos faltantes</span><span class="st d">Listo</span></div>
+            <div class="row"><span>Redactar por organismo</span><span class="st c">En curso</span></div>
+            <div class="row"><span>Sugerir recursos de asistencia</span><span class="st n">Pendiente</span></div>
+          </div>
+        </div>
+        <div class="arrow"><svg><use href="#arrow"/></svg></div>
+        <div class="card">
+          <p class="step">3 · Salida</p><h3>Borrador para el operador</h3>
+          <div class="tabs" style="margin-top:10px"><span>Salud</span><span class="on">Policía</span></div>
+          <div class="doc">
+            <b>Resumen</b>Robo de celular en vía pública, dos personas en moto.
+            <b>Cuándo y dónde</b>Noche (18 a 24 h) · Barrio Centro, zona aproximada.
+            <b>Patrón en la zona</b>3.º reporte similar en 30 días.
+            <b>Falta confirmar</b>Hora exacta y si hubo lesiones.
+          </div>
+        </div>
+      </div>
+      <div class="guard">
+        <div><div class="ico" style="flex:none"><svg><use href="#check"/></svg></div><span><strong>Humano en el circuito</strong>El operador revisa y aprueba antes de derivar.</span></div>
+        <div><div class="ico" style="flex:none"><svg><use href="#lock"/></svg></div><span><strong>Sin datos personales</strong>El contacto cifrado nunca llega al modelo.</span></div>
+        <div><div class="ico" style="flex:none"><svg><use href="#scale"/></svg></div><span><strong>No juzga personas</strong>No decide culpas ni perfila: describe el hecho.</span></div>
+        <div><div class="ico" style="flex:none"><svg><use href="#spark"/></svg></div><span><strong>Trazable</strong>Cada informe guarda el modelo y la versión usados.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Privacidad -->
+  <section class="slide">
     <div class="body">
       <p class="eyebrow">Privacidad por diseño</p>
       <h2>Datos sensibles, tratados como tales.</h2>
@@ -274,8 +313,8 @@ td:first-child{font-weight:600}
     </div>
   </section>
 
-  <!-- 5. Modelo de negocio -->
-  <section class="slide" data-nav="est">
+  <!-- 6. Modelo de negocio -->
+  <section class="slide">
     <div class="body">
       <p class="eyebrow">Modelo de negocio</p>
       <h2>Gratis para la gente, valor para el Estado.</h2>
@@ -292,14 +331,14 @@ td:first-child{font-weight:600}
   </section>
 
 </div></div>
-<div class="ctrl"><button id="prev" aria-label="Anterior">←</button><span id="count">1 / 5</span><button id="next" aria-label="Siguiente">→</button></div>
+<div class="ctrl"><button id="prev" aria-label="Anterior">←</button><span id="count">1 / 6</span><button id="next" aria-label="Siguiente">→</button></div>
 
 <script>
 const slides=[...document.querySelectorAll('.slide')];
-const hdr=document.getElementById('hdr').content,foot=document.getElementById('foot').content;
-slides.forEach(s=>{const h=hdr.cloneNode(true);const k=s.dataset.nav;h.querySelectorAll('[data-k]').forEach(n=>n.classList.toggle('on',n.dataset.k===k));s.prepend(h);s.append(foot.cloneNode(true));});
+const hdr=document.getElementById('hdr').content;
+slides.forEach(s=>s.prepend(hdr.cloneNode(true)));
 const deck=document.getElementById('deck');
-function fit(){const k=Math.min(innerWidth/1320,(innerHeight-56)/740);deck.style.transform='translate(-50%,-50%) scale('+k+')';}
+function fit(){const k=Math.min(innerWidth/1280,innerHeight/720);deck.style.width=innerWidth/k+'px';deck.style.height=innerHeight/k+'px';deck.style.transform='scale('+k+')';}
 addEventListener('resize',fit);fit();
 let i=0;const bar=document.getElementById('bar'),count=document.getElementById('count');
 function go(n){i=Math.max(0,Math.min(slides.length-1,n));
