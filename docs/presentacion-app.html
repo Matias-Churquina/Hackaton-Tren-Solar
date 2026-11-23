@@ -18,8 +18,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#dfe6ea;color:var(--foreground);
   font-family:Geist,"Geist Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-.stage{position:fixed;inset:0 0 56px;display:grid;place-items:center}
-.deck{position:relative;width:1280px;height:720px;transform-origin:center}
+.stage{position:fixed;inset:0 0 56px;overflow:hidden}
+.deck{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center}
 .slide{position:absolute;inset:0;background:var(--background);border-radius:14px;overflow:hidden;
   box-shadow:0 24px 60px rgba(18,60,78,.18),0 0 0 1px var(--border);display:flex;flex-direction:column;
   opacity:0;transform:translateX(30px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
@@ -299,15 +299,16 @@ const slides=[...document.querySelectorAll('.slide')];
 const hdr=document.getElementById('hdr').content,foot=document.getElementById('foot').content;
 slides.forEach(s=>{const h=hdr.cloneNode(true);const k=s.dataset.nav;h.querySelectorAll('[data-k]').forEach(n=>n.classList.toggle('on',n.dataset.k===k));s.prepend(h);s.append(foot.cloneNode(true));});
 const deck=document.getElementById('deck');
-function fit(){const k=Math.min(innerWidth/1320,(innerHeight-56)/740);deck.style.transform='scale('+k+')';}
+function fit(){const k=Math.min(innerWidth/1320,(innerHeight-56)/740);deck.style.transform='translate(-50%,-50%) scale('+k+')';}
 addEventListener('resize',fit);fit();
 let i=0;const bar=document.getElementById('bar'),count=document.getElementById('count');
 function go(n){i=Math.max(0,Math.min(slides.length-1,n));
-  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('prev',k<i)});
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('prev',k<i);s.inert=k!==i;s.setAttribute('aria-hidden',k!==i)});
   history.replaceState(null,'','#'+(i+1));bar.style.width=((i+1)/slides.length*100)+'%';count.textContent=(i+1)+' / '+slides.length;}
 document.getElementById('next').onclick=()=>go(i+1);
 document.getElementById('prev').onclick=()=>go(i-1);
 addEventListener('keydown',e=>{
+  if([' ','Enter'].includes(e.key)&&e.target.closest?.('button'))return;
   if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();go(i+1)}
   if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();go(i-1)}
   if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
